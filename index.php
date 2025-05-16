@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="Goalmeter - Track Your Projects with Interactive Checklists">
+    <meta name="description"
+        content="Goalmeter helps you track project progress with a dual-view system that toggles between a text editor and interactive checklist. See real-time progress updates as you complete tasks.">
+    <meta name="keywords"
+        content="project management, task tracking, goal tracking, checklist, progress meter, productivity tool, goal completion progress visualization, goal measurement">
+    <meta name="author" content="Goalmeter Team">   
+    <meta name="theme-color" content="#4CAF50">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://goalmeter.xyz">
+    <meta property="og:title" content="Goalmeter - Track Your Projects with Interactive Checklists">
+    <meta property="og:description"
+        content="Transform your tasks into interactive checklists and track your progress in real-time. Seamlessly switch between editing and checking off tasks.">
+    <meta property="og:image" content="https://goalmeter.xyz/goalmeter.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://goalmeter.xyz">
+    <meta property="twitter:title" content="Goalmeter - Track Your Projects with Interactive Checklists">
+    <meta property="twitter:description"
+        content="Transform your tasks into interactive checklists and track your progress in real-time. Seamlessly switch between editing and checking off tasks.">
+    <meta property="twitter:image" content="https://goalmeter.xyz/goalmeter.png">
+	<link rel="icon" type="image/png" href="focus.png" />
+
+    <title>Goal Meter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .container.sidebar-open {
+            margin-right: 400px;
+        }
+
+        .progress-container {
+            background-color: #333;
+            height: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #444;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #72e072, #a4e57e);
+            border-radius: 20px;
+            width: 42.96%;
+            transition: width 1s ease;
+        }
+
+        .percentage {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .project-info {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .edit-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #72e072;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .edit-button:hover {
+            transform: scale(1.1);
+            background-color: #a4e57e;
+        }
+
+        .edit-icon {
+            width: 24px;
+            height: 24px;
+            fill: #000;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background-color: #222;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+			display:inline-block;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        #taskEditor {
+            flex: 1;
+            padding: 15px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: none;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        #editorView,
+        #checklistView {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+		
+		.save-button,
+        .edit-tasks-button {
+            background-color: #72e072;
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: auto;
+        }
+
+        .save-button:hover,
+        .edit-tasks-button:hover {
+            background-color: #a4e57e;
+        }
+
+        /* Checklist styles */
+        .task-checklist {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background-color: #333;
+            border-radius: 5px;
+            padding: 15px;
+            border: 1px solid #444;
+        }
+
+        .project-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #72e072;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+
+        .task-item,
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            padding: 8px 0;
+        }
+
+        .subtask-item {
+            margin-left: 20px;
+        }
+
+        .task-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .task-label {
+            font-size: 14px;
+        }
+
+        .task-main {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .note-item {
+            margin: 5px 0;
+            color: #999;
+            font-style: italic;
+        }
+
+        .empty-line {
+            height: 10px;
+        }
+		
+		a {
+			display:inline-block;
+		}
+		svg {
+			fill:#fff;
+			vertical-align:middle;
+			height: 16px;
+		}
+		
+		@media only screen and (max-width: 600px) {
+			#editorView, #checklistView {
+				display: flex;
+				flex-direction: column;
+				height: 90%;
+			}
+		}
+		
+    </style>
+</head>
+
+<body>
+    <div class="container" id="mainContainer">
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="percentage" id="percentage">42.96%</div>
+        </div>
+        <div class="project-info" id="projectInfo">Project Name / Task Name</div>
+    </div>
+
+    <div class="edit-button" id="editButton">
+        <svg class="edit-icon" viewBox="0 0 24 24">
+            <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 id="sidebarTitle">Edit Tasks</h2>
+			<a target="_blank" href="https://github.com/bhu1st/goalmeter"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a>			
+            <button class="close-sidebar" id="closeSidebar">&times;</button>
+        </div>
+        <div class="sidebar-content">
+            <!-- Text editor view -->
+            <div id="editorView">
+                <textarea id="taskEditor">* Goalmeter
+
+# [ ] Product Development
+- [ ] Implement dark/light theme toggle
+- [ ] Add data export/import functionality
+- [x] Create interactive checklist view
+- [ ] Build mobile app version
+- [ ] Implement user accounts & cloud sync
+- [ ] Add customizable themes and layouts
+- [ ] Create progress history charts
+- [ ] Implement reminder notifications
+
+# [ ] UI/UX Improvements
+- [x] Design responsive sidebar
+- [ ] Create onboarding tutorial
+- [ ] Improve accessibility features
+- [ ] Add keyboard shortcuts
+- [ ] Create shareable progress widgets
+- [ ] Design custom progress animations
+
+# [ ] Marketing Strategy
+- [x] Create project website
+- [ ] Write blog posts about productivity
+- [ ] Produce demo videos
+- [ ] Launch social media accounts
+- [ ] Set up email newsletter
+- [ ] Create press kit materials
+- [ ] Reach out to productivity bloggers
+- [ ] Submit to product hunt
+
+# [ ] User Growth
+- [ ] Launch beta testing program
+- [ ] Implement referral system
+- [ ] Create user feedback mechanism
+- [ ] Set up analytics tracking
+- [ ] Develop growth metrics dashboard
+- [ ] Start user interviews
+
+# [ ] Monetization Strategy
+- [ ] Define pricing tiers
+- [ ] Implement subscription system
+- [ ] Create premium features list
+- [ ] Set up payment processing
+- [ ] Design enterprise version
+- [ ] Create affiliate program
+
+# [ ] Sponsorship & Funding
+- [ ] Research potential sponsors
+- [ ] Create sponsorship pitch deck
+- [ ] Prepare demo for investor meetings
+- [ ] Reach out to productivity tool companies
+- [ ] Apply for startup accelerators
+- [ ] Contact angel investors
+- [ ] Prepare revenue projection models
+
+# [ ] Community Building
+- [x] Create GitHub repository
+- [ ] Set up documentation site
+- [ ] Establish developer community
+- [ ] Start regular community calls
+- [ ] Create contributor guidelines
+- [ ] Launch discord/slack community
+
+# [x] Initial Planning
+- [x] Define core functionality
+- [x] Create MVP feature list
+- [x] Design basic UI prototype
+- [x] Implement progress calculation logic
+- [x] Build task format parser</textarea>
+                <button class="save-button" id="saveProgress">Save Progress</button>
+            </div>
+
+            <!-- Checklist view -->
+            <div id="checklistView" style="display: none;">
+                <div id="taskChecklist" class="task-checklist"></div>
+                <button class="edit-tasks-button" id="editTasks">Edit Tasks</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Load saved data from localStorage if exists
+            const savedTasks = localStorage.getItem('goalMeterTasks');
+            if (savedTasks) {
+                $("#taskEditor").val(savedTasks);
+                calculateProgress();
+                updateProjectInfo();
+            }
+
+            // Toggle sidebar
+            $("#editButton").click(function () {
+                $("#sidebar").addClass("open");
+                $("#mainContainer").addClass("sidebar-open");
+            });
+
+            // Close sidebar
+            $("#closeSidebar").click(function () {
+                $("#sidebar").removeClass("open");
+                $("#mainContainer").removeClass("sidebar-open");
+            });
+
+            // Auto-save as user types
+            $("#taskEditor").on('input', function () {
+                const text = $(this).val();
+                localStorage.setItem('goalMeterTasks', text);
+                // Don't calculate progress here - we'll do that on Save button
+            });
+
+            // Save progress and show checklist view
+            $("#saveProgress").click(function () {
+                const text = $("#taskEditor").val();
+
+                // Save to localStorage
+                localStorage.setItem('goalMeterTasks', text);
+
+                // Calculate progress
+                calculateProgress();
+                updateProjectInfo();
+
+                // Generate and show checklist view
+                generateChecklist(text);
+
+                // Switch to checklist view
+                $("#sidebarTitle").text("Task Checklist");
+                $("#editorView").hide();
+                $("#checklistView").show();
+            });
+
+            // Switch back to editor view
+            $("#editTasks").click(function () {
+                $("#sidebarTitle").text("Edit Tasks");
+                $("#checklistView").hide();
+                $("#editorView").show();
+            });
+
+            // Handle checkbox clicks in the checklist view
+            $(document).on('change', '.task-checkbox', function () {
+                const index = $(this).data('index');
+                const isChecked = $(this).prop('checked');
+
+                // Get current text from storage
+                const text = localStorage.getItem('goalMeterTasks');
+                const lines = text.split('\n');
+
+                // Update the line with new checkbox state
+                const line = lines[index];
+                let updatedLine;
+
+                if (isChecked) {
+                    // Replace [ ] with [x]
+                    updatedLine = line.replace('[ ]', '[x]');
+                } else {
+                    // Replace [x] with [ ]
+                    updatedLine = line.replace('[x]', '[ ]');
+                }
+
+                lines[index] = updatedLine;
+
+                // Update textarea and localStorage
+                const updatedText = lines.join('\n');
+                $("#taskEditor").val(updatedText);
+                localStorage.setItem('goalMeterTasks', updatedText);
+
+                // Recalculate progress
+                calculateProgress();
+                updateProjectInfo();
+            });
+
+            function generateChecklist(text) {
+                const lines = text.split('\n');
+                let html = '';
+
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    let lineHtml = '';
+
+                    // Project title
+                    if (trimmedLine.startsWith('*')) {
+                        const title = trimmedLine.substring(1).trim();
+                        lineHtml = `<div class="project-title">${title}</div>`;
+                    }
+                    // Task (starts with #)
+                    else if (trimmedLine.startsWith('# [')) {
+                        const isChecked = trimmedLine.includes('[x]');
+                        const taskName = trimmedLine.substring(trimmedLine.indexOf(']') + 1).trim();
+
+                        lineHtml = `
+                            <div class="task-item">
+                                <input type="checkbox" class="task-checkbox" data-index="${index}" ${isChecked ? 'checked' : ''}>
+                                <span class="task-label task-main ${isChecked ? 'completed' : ''}">${taskName}</span>
+                            </div>
+                        `;
+                    }
+                    // Subtask (starts with -)
+                    else if (trimmedLine.startsWith('- [')) {
+                        const isChecked = trimmedLine.includes('[x]');
+                        const subtaskName = trimmedLine.substring(trimmedLine.indexOf(']') + 1).trim();
+
+                        lineHtml = `
+                            <div class="subtask-item">
+                                <input type="checkbox" class="task-checkbox" data-index="${index}" ${isChecked ? 'checked' : ''}>
+                                <span class="task-label ${isChecked ? 'completed' : ''}">${subtaskName}</span>
+                            </div>
+                        `;
+                    }
+                    // Notes or other text
+                    else if (trimmedLine) {
+                        lineHtml = `<div class="note-item">${trimmedLine}</div>`;
+                    }
+                    // Empty line
+                    else {
+                        lineHtml = '<div class="empty-line"></div>';
+                    }
+
+                    html += lineHtml;
+                });
+
+                $("#taskChecklist").html(html);
+            }
+
+            function calculateProgress() {
+                const text = $("#taskEditor").val();
+                const lines = text.split('\n');
+
+                let totalTasks = 0;
+                let completedTasks = 0;
+
+                // Count tasks and subtasks
+                lines.forEach(line => {
+                    // Check for task or subtask with checkbox
+                    const trimmedLine = line.trim();
+
+                    // Tasks (starting with #) or subtasks (starting with -)
+                    if ((trimmedLine.startsWith('# [') || trimmedLine.startsWith('- [')) &&
+                        (trimmedLine.includes('[ ]') || trimmedLine.includes('[x]'))) {
+                        totalTasks++;
+
+                        // Check if it's completed
+                        if (trimmedLine.includes('[x]')) {
+                            completedTasks++;
+                        }
+                    }
+                });
+
+                // Calculate percentage
+                let progress = 0;
+                if (totalTasks > 0) {
+                    progress = (completedTasks / totalTasks) * 100;
+                }
+
+                // Update progress bar
+                $("#progressBar").css("width", progress + "%");
+                $("#percentage").text(progress.toFixed(2) + "%");
+
+                // Save calculated progress
+                localStorage.setItem('goalMeterProgress', progress.toFixed(2));
+            }
+
+            function updateProjectInfo() {
+                const text = $("#taskEditor").val();
+                const lines = text.split('\n');
+
+                // Find project name (first line with *)
+                let projectName = "";
+                for (const line of lines) {
+                    if (line.trim().startsWith('*')) {
+                        projectName = line.trim().substring(1).trim();
+                        break;
+                    }
+                }
+
+                // Find first incomplete task
+                let firstIncompleteTask = "";
+                for (const line of lines) {
+                    if (line.trim().startsWith('# [ ]')) {
+                        firstIncompleteTask = line.trim().substring(5).trim();
+                        break;
+                    }
+                }
+
+                // Update the display
+                let infoText = projectName;
+                if (firstIncompleteTask) {
+                    infoText += " / " + firstIncompleteTask;
+                }
+
+                $("#projectInfo").text(infoText);
+            }
+        });
+    </script>
+</body>
+</html>
