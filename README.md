@@ -1,6 +1,6 @@
 # 🎯 Goalmeter
 
-A powerful project tracking tool that seamlessly transforms your task lists into interactive checklists with real-time progress monitoring.
+A powerful project tracking tool that seamlessly transforms your task lists into interactive checklists with real-time progress monitoring. Download Goalmeter New Tab Page Extension for Google Chrome or Brave [Goalmeter Extension](https://github.com/bhu1st/goalmeterext)
 
 ![Goalmeter Preview](goalmeter.png)
 
